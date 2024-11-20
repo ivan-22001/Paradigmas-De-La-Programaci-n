@@ -53,6 +53,23 @@ vacioAB :: AB a -> Bool
 vacioAB Nil = True
 vacioAB _ = False
 
+foldAB :: ( b -> a -> b -> b) -> b -> AB a -> b
+foldAB _ cb Nil = cb
+foldAB f cb (Bin i r d) = f (foldAB f cb i) r (foldAB f cb d)
+
+recAB :: (a -> AB a -> AB a -> b -> b -> b) -> b -> AB a -> b
+recAB _ cb Nil = cb
+recAB f cb (Bin i r d) = f r i d (recAB f cb i) (recAB f cb d)
+
+altura :: AB a -> Integer
+altura = foldAB (\i _ d -> 1 + max i d) 0
+
+cantNodos :: AB a -> Integer
+cantNodos = foldAB (\i _ d -> 1 + i + d) 0
+
+mejorSegún :: (a -> a -> Bool) -> AB a -> a
+mejorSegún f (Bin izq ra der)= foldAB(\ i r d -> if f r i && f r d then r else if f i r then i else d) ra (Bin izq ra der) 
+
 negacionAB :: AB Bool -> AB Bool
 negacionAB Nil = Nil
 negacionAB (Bin izq r der) = Bin (negacionAB izq) (not r) (negacionAB der)
@@ -85,5 +102,30 @@ instance Show a => Show (AB a) where
 myTree :: AB Bool
 myTree = negacionAB (Bin (Bin Nil True Nil) False (Bin Nil True Nil))
 
+
+
+
+--- Ejercicio 10 
+
+
+generate :: ([a] -> Bool) -> ([a] -> a) -> [a]
+generate stop next = generateFrom stop next []
+generateFrom:: ([a] -> Bool) -> ([a] -> a) -> [a] -> [a]
+generateFrom stop next xs | stop xs = init xs
+                          | otherwise = generateFrom stop next (xs ++ [next xs])
+
+
+
+
+foldNat :: (Integer -> b -> b) -> b -> Integer -> b
+foldNat f cb 0 = cb
+foldNat f cb n = f n (foldNat f cb (n-1))
+
+potencia :: Integer -> Integer -> Integer
+potencia n = foldNat (\_ acc-> acc*n) 1 
+
 main :: IO ()
-main = print myTree
+main = do
+    print (potencia 2 3)  -- Esto imprimirá 8
+    print (potencia 5 0)  -- Esto imprimirá 1
+    print (potencia 3 4)  -- Esto imprimirá 81
